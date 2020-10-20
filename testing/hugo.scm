@@ -2192,3 +2192,6 @@ deploy across cloud providers.")
     (description "Hugo takes a directory with content and templates and renders
 them into a full HTML website.")
     (license license:asl2.0)))
+
+
+go-golang-org-x-xerrors

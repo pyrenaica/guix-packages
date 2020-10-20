@@ -1,7 +1,9 @@
 ;;; Copyright © 2020 Ryan Prior <rprior@protonmail.com>
 
 (define-module (testing hugo)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages golang)
+  #:use-module (gnu packages protobuf)
   #:use-module (gnu packages rpc)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
@@ -260,7 +262,7 @@ of a Git repository.")
         (base32
          "0qchy411jm9q2l9mf7x3ry2ycaqp9xdhf2nx14qrpzcxfigv2705"))))
     (propagated-inputs
-     `(("go-golang-org-x-xerrors" ,go-golang.org-x-xerrors)))))
+     `(("go-golang-org-x-xerrors" ,go-golang-org-x-xerrors)))))
 
 (define-public go-github-com-fortytw2-leaktest
   (package
@@ -1933,6 +1935,97 @@ offer simplifications, and enforce style rules.")
     (arguments
      `(#:import-path "honnef.co/go/tools/cmd/staticcheck"
        #:unpack-path "honnef.co/go/tools"))))
+
+(define-public go-github-com-iancoleman-strcase
+  (package
+    (name "go-github-com-iancoleman-strcase")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/iancoleman/strcase")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0hxz1i4m82qkw0m4zlkhw427yid4isn6k5cp2q1627sg6jwlk63r"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "github.com/iancoleman/strcase"))
+    (home-page "https://github.com/iancoleman/strcase")
+    (synopsis "Convert text to @code{snake_case} or @code{camelCase}.")
+    (description
+     "This package provides functions to convert a string to various cases,
+e.g. snake case, camel case, or 8 others.")
+    (license license:expat)))
+
+(define-public go-github-com-golang-protobuf
+  (package
+    (name "go-github-com-golang-protobuf-proto")
+    (version "1.4.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/golang/protobuf")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0m5z81im4nsyfgarjhppayk4hqnrwswr3nix9mj8pff8x9jvcjqw"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "github.com/golang/protobuf"
+       ;; Source-only package
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'build))))
+    (synopsis "Go support for Protocol Buffers")
+    (description "This package provides Go support for the Protocol Buffers
+data serialization format.")
+    (home-page "https://github.com/golang/protobuf")
+    (license license:bsd-3)))
+
+(define-public go-google-golang-org-protobuf
+  (package
+    (name "go-google-golang-org-protobuf")
+    (version "1.25.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/protocolbuffers/protobuf-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0apfl42x166dh96zfq5kvv4b4ax9xljik6bq1mnvn2240ir3mc23"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "google.golang.org/protobuf"
+       ;; Source-only package
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'build))))
+    (propagated-inputs
+     `(("github.com/golang/protobuf" ,go-github-com-golang-protobuf)
+       ("github.com/google/go-cmp" ,go-github-com-google-go-cmp-cmp-0.5.2)))
+    (home-page "https://github.com/protocolbuffers/protobuf-go")
+    (synopsis "Go support for Google's protocol buffers.")
+    (description
+     "Go implementation for protocol buffers, which is a language-neutral,
+platform-neutral, extensible mechanism for serializing structured data.")
+    (license license:expat)))
+
+(define-public protoc-gen-go
+  (package
+    (inherit go-google-golang-org-protobuf)
+    (name "protoc-gen-go")
+    (arguments
+     '(#:import-path "google.golang.org/protobuf/cmd/protoc-gen-go"
+       #:unpack-path "google.golang.org/protobuf"))))
 
 (define-public go-google-golang-org-grpc
   (package

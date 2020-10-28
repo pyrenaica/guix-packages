@@ -222,48 +222,6 @@ timeframe on which it will change.")
 of a Git repository.")
     (license license:expat)))
 
-(define-public go-golang-org-x-xerrors
-  (let ((commit "5ec99f83aff198f5fbd629d6c8d8eb38a04218ca")
-        (revision "0"))
-    (package
-      (name "go-golang-org-x-xerrors")
-      (version (git-version "0.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://go.googlesource.com/xerrors")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1dbzc3gmf2haazpv7cgmv97rq40g2xzwbglc17vas8dwhgwgwrzb"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "golang.org/x/xerrors"))
-      (synopsis "Go 1.13 error values")
-      (description
-       "This package holds the transition packages for the new Go 1.13 error values.")
-      (home-page "https://godoc.org/golang.org/xerrors")
-      (license license:bsd-3))))
-
-(define-public go-github-com-google-go-cmp-cmp-0.5.2
-  (package
-    (inherit go-github-com-google-go-cmp-cmp)
-    (name "go-github-com-google-go-cmp-cmp")
-    (version "0.5.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/google/go-cmp")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0qchy411jm9q2l9mf7x3ry2ycaqp9xdhf2nx14qrpzcxfigv2705"))))
-    (propagated-inputs
-     `(("go-golang-org-x-xerrors" ,go-golang-org-x-xerrors)))))
-
 (define-public go-github-com-fortytw2-leaktest
   (package
     (name "go-github-com-fortytw2-leaktest")
@@ -288,91 +246,6 @@ of a Git repository.")
 test and at the end, to assist in detecting memory leaks.")
     (license license:expat)))
 
-(define-public go-github-com-frankban-quicktest
-  (package
-    (name "go-github-com-frankban-quicktest")
-    (version "1.11.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/frankban/quicktest")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0fbxrd6xgxq2r6v4cv6qrlpkhpdaxqb28hnw1hjf4lvcv4kibj6x"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/frankban/quicktest"))
-    (propagated-inputs
-     `(("go-github-com-google-go-cmp-cmp" ,go-github-com-google-go-cmp-cmp-0.5.2)
-       ("go-github-com-kr-pretty" ,go-github-com-kr-pretty)))
-    (home-page "https://github.com/frankban/quicktest")
-    (synopsis "Helpers for testing Go applications")
-    (description
-     "This package provides a collection of Go helpers for writing tests.")
-    (license license:expat)))
-
-(define-public go-github-com-bep-golibsass
-  (package
-    (name "go-github-com-bep-golibsass")
-    (version "0.7.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/bep/golibsass")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0xk3m2ynbydzx87dz573ihwc4ryq0r545vz937szz175ivgfrhh3"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           (delete-file-recursively "libsass_src")
-           #t))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/bep/golibsass/libsass"
-       #:unpack-path "github.com/bep/golibsass"
-       ;; The dev build tag modifies the build to link to system libsass
-       ;; instead of including the bundled one (which we remove.)
-       ;; https://github.com/bep/golibsass/blob/v0.7.0/internal/libsass/a__cgo_dev.go
-       #:build-flags '("-tags" "dev")
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'generate-bindings
-           ;; Generate bindings for system libsass, replacing the
-           ;; pre-generated bindings.
-           (lambda* (#:key inputs unpack-path #:allow-other-keys)
-             (mkdir-p (string-append "src/" unpack-path "/internal/libsass"))
-             (let ((libsass-src (string-append (assoc-ref inputs "libsass-src") "/src")))
-               (substitute* (string-append "src/" unpack-path "/gen/main.go")
-                 (("filepath.Join\\(rootDir, \"libsass_src\", \"src\"\\)")
-                  (string-append "\"" libsass-src "\""))
-                 (("../../libsass_src/src/")
-                  libsass-src)))
-             (invoke "go" "generate" (string-append unpack-path "/gen"))
-             #t))
-         (replace 'check
-           (lambda* (#:key tests? import-path #:allow-other-keys)
-             (if tests?
-                 (invoke "go" "test" import-path "-tags" "dev"))
-             #t)))))
-    (propagated-inputs
-     `(("libsass" ,libsass)))
-    (native-inputs
-     `(("go-github-com-frankban-quicktest" ,go-github-com-frankban-quicktest)
-       ("libsass-src" ,(package-source libsass))))
-    (home-page "https://github.com/bep/golibsass")
-    (synopsis "Golang bindings for LibSass")
-    (description
-     "This package provides SCSS compiler support for Go applications.")
-    (license license:expat)))
-
-
 (define-public go-github-com-bep-tmc
   (package
     (name "go-github-com-bep-tmc")
@@ -393,7 +266,7 @@ test and at the end, to assist in detecting memory leaks.")
     (propagated-inputs
      `(("go-github-com-bep-debounce" ,go-github-com-bep-debounce)
        ("go-github-com-frankban-quicktest" ,go-github-com-frankban-quicktest)
-       ("go-github-com-google-go-cmp-cmp" ,go-github-com-google-go-cmp-cmp-0.5.2)
+       ("go-github-com-google-go-cmp-cmp" ,go-github-com-google-go-cmp-cmp)
        ("go-gopkg-in-yaml-v2" ,go-gopkg-in-yaml-v2)))
     (home-page "https://github.com/bep/tmc")
     (synopsis "Serialization library for golang.")
@@ -550,7 +423,7 @@ the Autobahn Test Suite for WebSocket standard compliance.")
     (home-page "https://github.com/neurosnap/sentences")
     (synopsis "Multilingual command line sentence tokenizer for golang.")
     (description
-     "This command line utility will convert a blob of text into a list of
+     "The @code{sentences} tool converts a blob of text into a list of
 sentences.")
     (license license:expat)))
 
@@ -633,8 +506,7 @@ contains libraries for matrices, statistics, optimization, and more.")
      `(("go-github-com-neurosnap-sentences" ,go-github-com-neurosnap-sentences)
        ("go-gonum-org-v1-gonum" ,go-gonum-org-v1-gonum)))
     (home-page "https://github.com/jdkato/prose")
-    (synopsis "Library for text processing, including tokenization,
-part-of-speech tagging, and named-entity extraction.")
+    (synopsis "Library for text processing in golang.")
     (description
      "Prose is a natural language processing library in pure Go.  It supports
 tokenization, segmentation, part-of-speech tagging, and named-entity
@@ -659,9 +531,9 @@ extraction.")
     (arguments
      '(#:import-path "github.com/kyokomi/emoji"))
     (home-page "https://github.com/kyokomi/emoji")
-    (synopsis "Emoji terminal output for golang")
+    (synopsis "Write emoji to the terminal using golang")
     (description
-     "The emoji package provides methods for interpolating emoji into strings
+     "The @code{emoji} package provides methods for interpolating emoji into strings
 and character sequences.")
     (license license:expat)))
 
@@ -738,7 +610,7 @@ bootstrapped.")
        ("go-github-com-rogpeppe-go-internal" ,go-github-com-rogpeppe-go-internal)
        ("go-github-com-stretchr-testify" ,go-github-com-stretchr-testify)))
     (home-page "https://github.com/gobuffalo/envy")
-    (synopsis "Makes working with environment variables in Go trivial.")
+    (synopsis "Use and manage environment variables in golang.")
     (description
      "Envy provides convenience methods for working with environment
 variables.")
@@ -898,8 +770,8 @@ with common interpolation methods.")
     (home-page "https://github.com/muesli/smartcrop")
     (synopsis "Finds good image crops for arbitrary crop sizes.")
     (description
-     "Smartcrop implements an algorithm to find good crops for images.  It's
-based on Jonas Wagner's smartcrop.js.")
+     "Smartcrop implements an algorithm to find aesthetic crops for images.
+It's based on Jonas Wagner's @code{smartcrop.js}.")
     (license license:expat)))
 
 (define-public go-github-com-nicksnyder-go-i18n
@@ -959,8 +831,7 @@ translate Go programs into multiple languages.")
     (description
      "This package parses org-mode files and provides HTML export with
 sensible output.  It does not exactly reproduce the output of
-org-html-export.  The parser supports a reasonable subset of org-mode; it is
-huge and this package follows the 80/20 rule.")
+org-html-export.  The parser supports a subset of org-mode.")
     (license license:expat)))
 
 (define-public go-github-com-rwcarlsen-goexif
@@ -1013,10 +884,10 @@ huge and this package follows the 80/20 rule.")
     (home-page "https://github.com/sanity-io/litter")
     (synopsis "Pretty printer library for Go data structures.")
     (description
-     "This package prints Go literals, the better with which to litter your
-output.  Litter output is syntactically correct golang code.  You can use
-Litter to emit data during debug, and it's also suitable for “snapshot data”
-in unit tests since it produces deterministic output.")
+     "This package prints Golang literals values.  The output is syntactically
+correct golang code.  You can use @code{Litter} to emit data during debug, and
+it's also suitable for “snapshot data” in unit tests since it produces
+deterministic output.")
     (license license:expat)))
 
 (define-public go-github-com-spf13-fsync
@@ -1041,8 +912,8 @@ in unit tests since it produces deterministic output.")
     (home-page "https://github.com/spf13/fsync")
     (synopsis "Keeps files or directories in sync.")
     (description
-     "This package performs minimal I/O to synchronize the states and contents
-of files and directories.")
+     "This package calculates the minimal I/O to synchronize the states and
+contents of files and directories, and performs that synchronization.")
     (license license:expat)))
 
 (define-public go-github-com-matryer-try
@@ -1066,12 +937,10 @@ of files and directories.")
     (native-inputs
      `(("go-github-com-cheekybits-is" ,go-github-com-cheekybits-is)))
     (home-page "https://github.com/matryer/try")
-    (synopsis "Get hash values for arbitrary values in golang.")
+    (synopsis "Retry library for golang.")
     (description
-     "This package can be used to key values in a hash (for use in a map, set,
-etc.) that are complex.  The most common use case is comparing two values
-without sending data across the network, caching values locally (de-dup), and
-so on.")
+     "This package provides a facility to run a function and retry on error,
+up to to a configurable maximum number of retries.")
     (license license:expat)))
 
 (define-public go-github-com-tdewolff-test
@@ -1311,8 +1180,8 @@ buffers in concurrent use.")
     (home-page "https://github.com/daaku/go.zipexe")
     (synopsis "Open an executable binary file as a zip file.")
     (description
-     "This package opens a zip file, specially handling various binaries that
-may have been augmented with zip data.")
+     "This package opens a zip file, with special handling for binaries that
+are augmented with zip data.")
     (license license:expat)))
 
 (define-public go-github-com-geertjohan-go-rice
@@ -1341,10 +1210,10 @@ may have been augmented with zip data.")
        ("go-github-com-nkovacs-streamquote" ,go-github-com-nkovacs-streamquote)
        ("go-github-com-valyala-fasttemplate" ,go-github-com-valyala-fasttemplate)))
     (home-page "https://github.com/GeertJohan/go.rice")
-    (synopsis "Go minifiers for web formats.")
+    (synopsis "Bundle static resource data with an executable.")
     (description
-     "This package provides HTML5, CSS3, JS, JSON, SVG and XML minifiers and
-an interface to implement any other minifier.")
+     "This tool loads static resource data, like HTML or images, and bundles
+them together with an executable file.")
     (license license:expat)))
 
 (define-public go-github-com-alecthomas-kong
@@ -2011,7 +1880,7 @@ data serialization format.")
          (delete 'build))))
     (propagated-inputs
      `(("github.com/golang/protobuf" ,go-github-com-golang-protobuf)
-       ("github.com/google/go-cmp" ,go-github-com-google-go-cmp-cmp-0.5.2)))
+       ("github.com/google/go-cmp" ,go-github-com-google-go-cmp-cmp)))
     (home-page "https://github.com/protocolbuffers/protobuf-go")
     (synopsis "Go support for Google's protocol buffers.")
     (description
@@ -2236,7 +2105,7 @@ deploy across cloud providers.")
        ("go-github-com-ghodss-yaml" ,go-github-com-ghodss-yaml)
        ("go-github-com-gobwas-glob" ,go-github-com-gobwas-glob)
        ;; github.com/gohugoio/testmodBuilder -- circular dep??
-       ("go-github-com-google-go-cmp-cmp" ,go-github-com-google-go-cmp-cmp-0.5.2)
+       ("go-github-com-google-go-cmp-cmp" ,go-github-com-google-go-cmp-cmp)
        ("go-github-com-gorilla-websocket" ,go-github-com-gorilla-websocket)
        ("go-github-com-jdkato-prose" ,go-github-com-jdkato-prose)
        ("go-github-com-kyokomi-emoji" ,go-github-com-kyokomi-emoji)
